@@ -1,0 +1,113 @@
+# Reproducible Research Assignment 1
+
+## 1. Load and process the data
+
+```{r}
+  activity <- read.csv("activity.csv")
+```
+
+## 2. The mean total steps taken per day
+
+Subset the data by steps and dates, getting the sum of steps per date.
+Create histogram.
+
+```{r}
+  steps <- aggregate(steps ~ date, data = activity, na.rm = TRUE, sum)    
+  hist(steps$steps, xlab = "Steps per Day", ylab = "Number of Days Steps        Achieved", main = "Number of Steps per Day", col = 5)
+
+```
+
+Mean and median of total steps taken per day.
+
+```{r}
+  mean(steps$steps)
+  median(steps$steps)
+```
+
+## 3.The average daily activity pattern
+
+Subset the data and make line plot.
+
+```{r}
+  y <- aggregate(steps ~ interval, data = activity, na.rm = TRUE, mean)
+  plot(steps ~ interval, data = y, type = "l", col = 2)
+```
+
+Get the interval with the highest average.
+
+```{r}
+  y[which.max(y$steps),]
+```
+
+## 4. Imputing missing values
+
+Calculate the number of rows with missing values.
+
+```{r}
+  sum(rowSums(is.na(activity)))
+```
+
+Replace the NA's with average steps from earlier.
+
+```{r}
+  for(i in 1:length(activity$steps)){
+    if(is.na(activity$steps[i])){
+      n <- which(activity$interval[i] == y$interval)
+      activity$steps[i] <- y[n,]$steps
+    }
+  }
+```
+
+Histogram of new data, repeating Step 2.
+
+```{r}
+  steps <- aggregate(steps ~ date, data = activity, na.rm = TRUE, sum)    
+  hist(steps$steps, xlab = "Steps per Day", ylab = "Number of Days Steps        Achieved", main = "Number of Steps per Day", col = 5)
+```
+
+Mean and median of new dataset. Only the median difference slightly.
+
+```{r}
+  mean(steps$steps)
+  median(steps$steps)
+```
+
+## 5. Differences in activity patterns on weekends and weekdays
+
+Make sure the date data is in the correct format, then create column with the weekday.
+
+```{r}
+  activity$date <- as.Date(activity$date)
+  activity$DayofWeek <- weekdays(activity$date)
+  
+  for(i in 1:length(activity$DayofWeek)){
+    if(activity$DayofWeek[i] == "Saturday" | activity$DayofWeek[i] == "Sunday"){
+      activity$type[i] <- "Weekend" 
+    }
+    else
+      activity$type[i] <- "Weekday"
+  }
+  activity$type <- as.factor(activity$type)
+  head(activity)
+```
+
+Time series plot.
+
+```{r}
+  library(ggplot2)
+  y <- aggregate(steps ~ interval + type, data = activity, na.rm = TRUE, mean)
+  p <- ggplot(y, aes(x = interval, y = steps)) +
+    geom_line() +
+    facet_grid(type ~ .)
+  print(p)
+```
+
+
+
+
+
+
+
+
+
+
